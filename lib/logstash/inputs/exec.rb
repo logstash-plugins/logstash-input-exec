@@ -14,7 +14,6 @@ require "socket" # for Socket.gethostname
 class LogStash::Inputs::Exec < LogStash::Inputs::Base
 
   config_name "exec"
-  milestone 2
 
   default :codec, "plain"
 
