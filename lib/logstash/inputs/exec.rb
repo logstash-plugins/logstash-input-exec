@@ -3,13 +3,12 @@ require "logstash/inputs/base"
 require "logstash/namespace"
 require "socket" # for Socket.gethostname
 
-# Run command line tools and capture the whole output as an event.
+# Periodically run a shell command and capture the whole output as an event.
 #
 # Notes:
 #
-# * The `@source` of this event will be the command run.
-# * The `@message` of this event will be the entire stdout of the command
-#   as one event.
+# * The `command` field of this event will be the command run.
+# * The `message` field of this event will be the entire stdout of the command.
 #
 class LogStash::Inputs::Exec < LogStash::Inputs::Base
 
