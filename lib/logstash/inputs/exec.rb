@@ -2,6 +2,7 @@
 require "logstash/inputs/base"
 require "logstash/namespace"
 require "socket" # for Socket.gethostname
+require "stud/interval"
 
 # Periodically run a shell command and capture the whole output as an event.
 #
@@ -25,42 +26,66 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   # Interval to run the command. Value is in seconds.
   config :interval, :validate => :number, :required => true
 
-  public
   def register
-    @logger.info("Registering Exec Input", :type => @type,
-                 :command => @command, :interval => @interval)
+    @logger.info("Registering Exec Input", :type => @type, :command => @command, :interval => @interval)
+    @hostname = Socket.gethostname
+    @io       = nil
   end # def register
 
-  public
   def run(queue)
-    hostname = Socket.gethostname
-    loop do
+
+    while !stop?
       start = Time.now
-      @logger.info? && @logger.info("Running exec", :command => @command)
-      out = IO.popen(@command)
-      # out.read will block until the process finishes.
-      @codec.decode(out.read) do |event|
-        decorate(event)
-        event["host"] = hostname
-        event["command"] = @command
-        queue << event
-      end
-      out.close
-
+      execute(@command)
       duration = Time.now - start
-      @logger.info? && @logger.info("Command completed", :command => @command,
-                                    :duration => duration)
 
-      # Sleep for the remainder of the interval, or 0 if the duration ran
-      # longer than the interval.
-      sleeptime = [0, @interval - duration].max
-      if sleeptime == 0
-        @logger.warn("Execution ran longer than the interval. Skipping sleep.",
-                     :command => @command, :duration => duration,
-                     :interval => @interval)
-      else
-        sleep(sleeptime)
-      end
+      @logger.info? && @logger.info("Command completed", :command => @command, :duration => duration)
+
+      wait_until_end_of_interval(duration)
     end # loop
   end # def run
+
+  def stop
+    if @io
+      @io.close
+      @io = nil
+    end
+  end
+
+  private
+
+  # Wait until the end of the interval
+  # @param [Integer] the duration of the last command executed
+  def wait_until_end_of_interval(duration)
+    # Sleep for the remainder of the interval, or 0 if the duration ran
+    # longer than the interval.
+    sleeptime = [0, @interval - duration].max
+    if sleeptime == 0
+      @logger.warn("Execution ran longer than the interval. Skipping sleep.",
+                   :command => @command, :duration => duration, :interval => @interval)
+    else
+      Stud.stoppable_sleep(sleeptime) { stop? }
+    end
+  end
+
+  # Execute a given command
+  # @param [String] A command string
+  def execute(command)
+    @logger.info? && @logger.info("Running exec", :command => command)
+    begin
+      @io = IO.popen(command)
+      @codec.decode(@io.read) do |event|
+        decorate(event)
+        event["host"]    = @hostname
+        event["command"] = command
+        queue << event
+      end
+    rescue Exception => e
+      @logger.error("Exception while running command", :e => e, :backtrace => e.backtrace)
+    ensure
+      @io.close
+      @io = nil
+    end
+  end
+
 end # class LogStash::Inputs::Exec
