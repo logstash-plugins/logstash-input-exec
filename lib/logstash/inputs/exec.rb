@@ -17,9 +17,6 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
 
   default :codec, "plain"
 
-  # Set this to true to enable debugging on an input.
-  config :debug, :validate => :boolean, :default => false, :deprecated => "This setting was never used by this plugin. It will be removed soon."
-
   # Command to run. For example, `uptime`
   config :command, :validate => :string, :required => true
 
