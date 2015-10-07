@@ -64,7 +64,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
       @logger.warn("Execution ran longer than the interval. Skipping sleep.",
                    :command => @command, :duration => duration, :interval => @interval)
     else
-      Stud.stoppable_sleep(sleeptime) { stop? }
+      Stud.stoppable_sleep(sleeptime) { stop? }
     end
   end
 
