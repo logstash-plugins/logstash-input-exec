@@ -33,23 +33,25 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end # def register
 
   def run(queue)
-
     while !stop?
-      start = Time.now
-      execute(@command)
-      duration = Time.now - start
-
-      @logger.info? && @logger.info("Command completed", :command => @command, :duration => duration)
-
-      wait_until_end_of_interval(duration)
+      inner_run(queue)
     end # loop
   end # def run
 
+  def inner_run(queue)
+    start = Time.now
+    execute(@command, queue)
+    duration = Time.now - start
+
+    @logger.info? && @logger.info("Command completed", :command => @command, :duration => duration)
+
+    wait_until_end_of_interval(duration)
+  end
+
   def stop
-    if @io
-      @io.close
-      @io = nil
-    end
+    return if @io.nil? || @io.closed?
+    @io.close
+    @io = nil
   end
 
   private
@@ -60,17 +62,18 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     # Sleep for the remainder of the interval, or 0 if the duration ran
     # longer than the interval.
     sleeptime = [0, @interval - duration].max
-    if sleeptime == 0
+    if sleeptime > 0
+      Stud.stoppable_sleep(sleeptime) { stop? }
+    else
       @logger.warn("Execution ran longer than the interval. Skipping sleep.",
                    :command => @command, :duration => duration, :interval => @interval)
-    else
-      Stud.stoppable_sleep(sleeptime) { stop? }
     end
   end
 
   # Execute a given command
   # @param [String] A command string
-  def execute(command)
+  # @param [Array or Queue] A queue to append events to
+  def execute(command, queue)
     @logger.info? && @logger.info("Running exec", :command => command)
     begin
       @io = IO.popen(command)
@@ -80,12 +83,14 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
         event["command"] = command
         queue << event
       end
+    rescue StandardError => e
+      @logger.error("Error while running command",
+        :command => command, :e => e, :backtrace => e.backtrace)
     rescue Exception => e
-      @logger.error("Exception while running command", :e => e, :backtrace => e.backtrace)
+      @logger.error("Exception while running command",
+        :command => command, :e => e, :backtrace => e.backtrace)
     ensure
-      @io.close
-      @io = nil
+      stop
     end
   end
-
 end # class LogStash::Inputs::Exec
