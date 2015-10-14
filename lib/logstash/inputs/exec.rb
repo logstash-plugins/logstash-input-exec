@@ -49,15 +49,12 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end
 
   def stop
-    close_and_nilify_io
+    return if @io.nil? || @io.closed?
+    @io.close
+    @io = nil
   end
 
   private
-
-  def close_and_nilify_io
-    return if @io.nil? || @io.closed?
-    @io.close
-  end
 
   # Wait until the end of the interval
   # @param [Integer] the duration of the last command executed
@@ -87,11 +84,13 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
         queue << event
       end
     rescue StandardError => e
-      @logger.error("Error while running command: #{command}", :e => e, :backtrace => e.backtrace)
+      @logger.error("Error while running command",
+        :command => command, :e => e, :backtrace => e.backtrace)
     rescue Exception => e
-      @logger.error("Exception while running command: #{command}", :e => e, :backtrace => e.backtrace)
+      @logger.error("Exception while running command",
+        :command => command, :e => e, :backtrace => e.backtrace)
     ensure
-      close_and_nilify_io
+      stop
     end
   end
 end # class LogStash::Inputs::Exec
