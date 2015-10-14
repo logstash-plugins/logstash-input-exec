@@ -39,13 +39,13 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end # def run
 
   def inner_run(queue)
-      start = Time.now
-      execute(@command, queue)
-      duration = Time.now - start
+    start = Time.now
+    execute(@command, queue)
+    duration = Time.now - start
 
-      @logger.info? && @logger.info("Command completed", :command => @command, :duration => duration)
+    @logger.info? && @logger.info("Command completed", :command => @command, :duration => duration)
 
-      wait_until_end_of_interval(duration)
+    wait_until_end_of_interval(duration)
   end
 
   def stop
