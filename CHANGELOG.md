@@ -1,3 +1,7 @@
+## 2.0.3
+ - fix masked errors due to rescue Exception
+ - fix random race condition on closing io object
+ - refactor code for more reliable tests
 ## 2.0.1
  - Replace non-whitespace character in code
 
