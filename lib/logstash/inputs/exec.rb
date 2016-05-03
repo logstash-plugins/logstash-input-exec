@@ -79,8 +79,8 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
       @io = IO.popen(command)
       @codec.decode(@io.read) do |event|
         decorate(event)
-        event["host"]    = @hostname
-        event["command"] = command
+        event.set("host", @hostname)
+        event.set("command", command)
         queue << event
       end
     rescue StandardError => e
