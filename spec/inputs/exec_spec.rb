@@ -15,7 +15,8 @@ describe LogStash::Inputs::Exec do
     let(:queue) { [] }
     let(:loggr) { double('loggr') }
 
-    before do
+    before :each do
+      expect(LogStash::Inputs::Exec).to receive(:logger).and_return(loggr).exactly(7).times
       allow(loggr).to receive(:info)
       allow(loggr).to receive(:info?)
       allow(loggr).to receive(:warn)
@@ -25,7 +26,6 @@ describe LogStash::Inputs::Exec do
     end
 
     it "enqueues some events" do
-      input.logger = loggr
       input.register
       expect(loggr).not_to receive(:error)
 
