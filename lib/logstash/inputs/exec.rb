@@ -40,7 +40,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     execute(@command, queue)
     duration = Time.now - start
 
-    @logger.info? && @logger.info("Command completed", :command => @command, :duration => duration)
+    @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration)
 
     wait_until_end_of_interval(duration)
   end
@@ -71,7 +71,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   # @param [String] A command string
   # @param [Array or Queue] A queue to append events to
   def execute(command, queue)
-    @logger.info? && @logger.info("Running exec", :command => command)
+    @logger.debug? && @logger.debug("Running exec", :command => command)
     begin
       @io = IO.popen(command)
       @codec.decode(@io.read) do |event|

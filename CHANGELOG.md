@@ -1,3 +1,6 @@
+## 3.1.2
+  - Move some log messages from info to debug to avoid noise
+
 ## 3.1.1
   - Relax constraint on logstash-core-plugin-api to >= 1.60 <= 2.99
 
