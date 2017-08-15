@@ -1,3 +1,6 @@
+## 3.1.4
+  - Fix some documentation issues
+
 ## 3.1.2
   - Move some log messages from info to debug to avoid noise
 
