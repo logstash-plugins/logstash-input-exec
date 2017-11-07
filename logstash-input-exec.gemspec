@@ -1,9 +1,9 @@
 Gem::Specification.new do |s|
 
   s.name            = 'logstash-input-exec'
-  s.version         = '3.1.4'
+  s.version         = '3.1.5'
   s.licenses        = ['Apache License (2.0)']
-  s.summary         = "Run command line tools and capture the whole output as an event."
+  s.summary         = "Captures the output of a shell command as an event"
   s.description     = "This gem is a Logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/logstash-plugin install gemname. This gem is not a stand-alone program"
   s.authors         = ["Elastic"]
   s.email           = 'info@elastic.co'
