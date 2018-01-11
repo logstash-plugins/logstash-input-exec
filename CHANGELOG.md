@@ -1,3 +1,6 @@
+## 3.2.0
+  - Add 'schedule' option to schedule the command to run, using a cron expression
+
 ## 3.1.5
   - Update gemspec summary
 
