@@ -45,6 +45,10 @@ describe LogStash::Inputs::Exec do
       let(:config) { { "command" => "ls", "interval" => 100 } }
     end
 
+    it_behaves_like "an interruptible input plugin" do
+      let(:config) { { "command" => "ls" } }
+    end
+
   end
 
 end
