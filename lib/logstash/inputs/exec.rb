@@ -21,7 +21,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   config :command, :validate => :string, :required => true
 
   # Interval to run the command. Value is in seconds.
-  config :interval, :validate => :number, :required => true
+  config :interval, :validate => :number, :default => 1
 
   def register
     @logger.info("Registering Exec Input", :type => @type, :command => @command, :interval => @interval)
