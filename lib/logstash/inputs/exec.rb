@@ -42,11 +42,11 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
 
   def run(queue)
     if @schedule
-          @scheduler = Rufus::Scheduler.new(:max_work_threads => 1)
-          @scheduler.cron @schedule do
-            inner_run(queue)
-          end
-          @scheduler.join
+      @scheduler = Rufus::Scheduler.new(:max_work_threads => 1)
+      @scheduler.cron @schedule do
+        inner_run(queue)
+      end
+      @scheduler.join
     else
       while !stop?
         duration = inner_run(queue)
