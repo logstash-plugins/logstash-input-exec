@@ -44,30 +44,56 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     if @schedule
       @scheduler = Rufus::Scheduler.new(:max_work_threads => 1)
       @scheduler.cron @schedule do
-        inner_run(queue)
+        execute(queue)
       end
       @scheduler.join
     else
       while !stop?
-        duration = inner_run(queue)
+        duration = execute(queue)
         wait_until_end_of_interval(duration)
       end # loop
     end
   end # def run
 
-  def inner_run(queue)
-    start = Time.now
-    execute(@command, queue)
-    duration = Time.now - start
-
-    @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration)
-
-    return duration
-  end
-
   def stop
     close_io()
     @scheduler.shutdown(:wait) if @scheduler
+  end
+
+  # Execute a given command
+  # @param [String] A command string
+  # @param [Array or Queue] A queue to append events to
+  def execute(queue)
+    @logger.debug? && @logger.debug("Running exec", :command => @command)
+    begin
+
+      start = Time.now
+      @io = IO.popen(@command)
+      output = @io.read
+      @io.close # required in order to read $?
+      exit_status = $?.to_i # should be threadsafe as per rb_thread_save_context
+      duration = Time.now - start
+      @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration)
+
+      @codec.decode(output) do |event|
+        decorate(event)
+        event.set("host", @hostname)
+        event.set("command", @command)
+        event.set("[@metadata][duration]", duration)
+        event.set("[@metadata][exit_status]", exit_status)
+        queue << event
+      end
+
+    rescue StandardError => e
+      @logger.error("Error while running command",
+        :command => @command, :e => e, :backtrace => e.backtrace)
+    rescue Exception => e
+      @logger.error("Exception while running command",
+        :command => @command, :e => e, :backtrace => e.backtrace)
+    ensure
+      close_io()
+    end
+    return duration
   end
 
   private
@@ -93,27 +119,5 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     end
   end
 
-  # Execute a given command
-  # @param [String] A command string
-  # @param [Array or Queue] A queue to append events to
-  def execute(command, queue)
-    @logger.debug? && @logger.debug("Running exec", :command => command)
-    begin
-      @io = IO.popen(command)
-      @codec.decode(@io.read) do |event|
-        decorate(event)
-        event.set("host", @hostname)
-        event.set("command", command)
-        queue << event
-      end
-    rescue StandardError => e
-      @logger.error("Error while running command",
-        :command => command, :e => e, :backtrace => e.backtrace)
-    rescue Exception => e
-      @logger.error("Exception while running command",
-        :command => command, :e => e, :backtrace => e.backtrace)
-    ensure
-      close_io()
-    end
-  end
+
 end # class LogStash::Inputs::Exec
