@@ -71,7 +71,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
       @io = IO.popen(@command)
       output = @io.read
       @io.close # required in order to read $?
-      exit_status = $?.to_i # should be threadsafe as per rb_thread_save_context
+      exit_status = $?.exitstatus # should be threadsafe as per rb_thread_save_context
       duration = Time.now - start
       @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration)
 

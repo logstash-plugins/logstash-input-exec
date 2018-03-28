@@ -42,6 +42,38 @@ describe LogStash::Inputs::Exec do
     end
   end
 
+
+  context "when the command runs for a 2 seconds" do
+    let(:input) { LogStash::Plugin.lookup("input", "exec").new("command" => "sleep 1", "interval" => 0) }
+    let(:queue) { [] }
+    it "it's tracked in metadata" do
+      input.register
+      input.execute(queue)
+      expect(queue.pop.get('[@metadata][duration]')).to be > 1
+    end
+  end
+
+  context "when a command runs normally" do
+    let(:input) { LogStash::Plugin.lookup("input", "exec").new("command" => "/bin/sh -c 'sleep 1; /bin/echo -n two; exit 3'", "interval" => 0) }
+    let(:queue) { [] }
+
+    before do
+      input.register
+      input.execute(queue)
+    end
+
+    it "has duration tracked" do
+      expect(queue.pop.get('[@metadata][duration]')).to be > 1
+    end
+    it "has output as expected" do
+      expect(queue[0].get('message')).to eq "two"
+    end
+    it "has exit_status tracked" do
+      expect(queue[0].get('[@metadata][exit_status]')).to eq 3
+    end
+
+  end
+
   # context "when scheduling" do
   #   let(:input) { LogStash::Plugin.lookup("input", "exec").new("command" => "ls", "schedule" => "* * * * * UTC") }
   #   let(:queue) { [] }
