@@ -93,7 +93,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     ensure
       close_io()
     end
-    return duration
+    return duration || 0
   end
 
   private
