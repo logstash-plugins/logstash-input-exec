@@ -51,41 +51,44 @@ describe LogStash::Inputs::Exec do
       input.execute(queue)
     end
 
+    after do
+      input.stop
+    end
+
     it "has duration tracked" do
       expect(queue.pop.get('[@metadata][duration]')).to be > 1
     end
     it "has output as expected" do
-      expect(queue[0].get('message')).to eq "two"
+      expect(queue.pop.get('message')).to eq "two"
     end
     it "has exit_status tracked" do
-      expect(queue[0].get('[@metadata][exit_status]')).to eq 3
+      expect(queue.pop.get('[@metadata][exit_status]')).to eq 3
     end
 
   end
 
-  # context "when scheduling" do
-  #   let(:input) { LogStash::Plugin.lookup("input", "exec").new("command" => "ls", "schedule" => "* * * * * UTC") }
-  #   let(:queue) { [] }
-  
-  #   before do
-  #     input.register
-  #   end
-  
-  #   it "should properly schedule" do
-  #     Timecop.travel(Time.new(2000))
-  #     Timecop.scale(60)
-  #     runner = Thread.new do
-  #       input.run(queue)
-  #     end
-  #     sleep 3
-  #     input.stop
-  #     runner.kill
-  #     runner.join
-  #     expect(queue.size).to eq(2)
-  #     Timecop.return
-  #   end
-  
-  # end
+  context "when scheduling" do
+    let(:input) { LogStash::Plugin.lookup("input", "exec").new("command" => "ls", "schedule" => "* * * * * UTC") }
+    let(:queue) { [] }
+
+    before do
+      input.register
+    end
+
+    it "should properly schedule" do
+      Timecop.travel(Time.new(2000))
+      Timecop.scale(60)
+      runner = Thread.new do
+        input.run(queue)
+      end
+      sleep 3
+      input.stop
+      runner.kill
+      runner.join
+      expect(queue.size).to eq(2)
+      Timecop.return
+    end
+  end
 
   context "when interrupting the plugin" do
 

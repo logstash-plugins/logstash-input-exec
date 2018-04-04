@@ -64,17 +64,21 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   # @param [String] A command string
   # @param [Array or Queue] A queue to append events to
   def execute(queue)
-    @logger.debug? && @logger.debug("Running exec", :command => @command)
+    start = Time.now
+    output = exit_status = nil
     begin
-
-      start = Time.now
-      @io = IO.popen(@command)
-      output = @io.read
-      @io.close # required in order to read $?
-      exit_status = $?.exitstatus # should be threadsafe as per rb_thread_save_context
-      duration = Time.now - start
-      @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration)
-
+      @logger.debug? && @logger.debug("Running exec", :command => @command)
+      output, exit_status = run_command()
+    rescue StandardError => e
+      @logger.error("Error while running command",
+        :command => @command, :e => e, :backtrace => e.backtrace)
+    rescue Exception => e
+      @logger.error("Exception while running command",
+        :command => @command, :e => e, :backtrace => e.backtrace)
+    end
+    duration = Time.now - start
+    @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration)
+    if output
       @codec.decode(output) do |event|
         decorate(event)
         event.set("host", @hostname)
@@ -83,20 +87,21 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
         event.set("[@metadata][exit_status]", exit_status)
         queue << event
       end
-
-    rescue StandardError => e
-      @logger.error("Error while running command",
-        :command => @command, :e => e, :backtrace => e.backtrace)
-    rescue Exception => e
-      @logger.error("Exception while running command",
-        :command => @command, :e => e, :backtrace => e.backtrace)
-    ensure
-      close_io()
     end
-    return duration || 0
+    duration
   end
 
   private
+
+  def run_command
+    @io = IO.popen(@command)
+    output = @io.read
+    @io.close # required in order to read $?
+    exit_status = $?.exitstatus # should be threadsafe as per rb_thread_save_context
+    [output, exit_status]
+  ensure
+    close_io()
+  end
 
   # Close @io
   def close_io
