@@ -1,3 +1,6 @@
+## 3.3.0
+  - Add metadata data to the event wrt execution duration and exit status
+
 ## 3.2.0
   - Add 'schedule' option to schedule the command to run, using a cron expression
 
