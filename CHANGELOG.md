@@ -1,3 +1,6 @@
+## 3.3.1
+  - Docs: Set the default_codec doc attribute.
+
 ## 3.3.0
   - Add metadata data to the event wrt execution duration and exit status
 

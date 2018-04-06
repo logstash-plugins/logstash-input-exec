@@ -1,5 +1,6 @@
 :plugin: exec
 :type: input
+:default_codec: plain
 
 ///////////////////////////////////////////
 START - GENERATED VARIABLES, DO NOT EDIT!
@@ -106,3 +107,5 @@ Either `interval` or `schedule` option must be defined.
 
 [id="plugins-{type}s-{plugin}-common-options"]
 include::{include_path}/{type}.asciidoc[]
+
+:default_codec!:
