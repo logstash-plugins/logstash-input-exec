@@ -74,7 +74,7 @@ Command to run. For example, `uptime`
 [id="plugins-{type}s-{plugin}-interval"]
 ===== `interval` 
 
-  * Value type is <<string,string>>
+  * Value type is <<number,number>>
   * There is no default value for this setting.
 
 Interval to run the command. Value is in seconds.
@@ -84,7 +84,7 @@ Either `interval` or `schedule` option must be defined.
 [id="plugins-{type}s-{plugin}-schedule"]
 ===== `schedule` 
 
-  * Value type is <<number,number>>
+  * Value type is <<string,string>>
   * There is no default value for this setting.
 
 Schedule of when to periodically run command.
