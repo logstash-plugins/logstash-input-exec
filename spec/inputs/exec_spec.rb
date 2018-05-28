@@ -6,24 +6,26 @@ require_relative "../spec_helper"
 describe LogStash::Inputs::Exec do
 
   context "when register" do
+    let(:input) { described_class.new("command" => "ls", "interval" => 0) }
     it "should not raise error if config is valid" do
-      input = LogStash::Plugin.lookup("input", "exec").new("command" => "ls", "interval" => 0)
       # register will try to load jars and raise if it cannot find jars or if org.apache.log4j.spi.LoggingEvent class is not present
       expect {input.register}.to_not raise_error
     end
-    it "should raise error if config is invalid" do
-      input = LogStash::Plugin.lookup("input", "exec").new("command" => "ls")
-      expect {input.register}.to raise_error
+    context "with an invalid config" do
+      let(:input) { described_class.new("command" => "ls") }
+      it "should raise error" do
+        expect {input.register}.to raise_error
+      end
     end
   end
 
   context "when operating normally" do
-    let(:input) { LogStash::Plugin.lookup("input", "exec").new("command" => "ls", "interval" => 0) }
+    let(:input) { described_class.new("command" => "ls", "interval" => 0) }
     let(:queue) { [] }
     let(:loggr) { double('loggr') }
 
     before :each do
-      expect(LogStash::Inputs::Exec).to receive(:logger).and_return(loggr).exactly(7).times
+      expect(described_class).to receive(:logger).and_return(loggr).exactly(7).times
       allow(loggr).to receive(:info)
       allow(loggr).to receive(:info?)
       allow(loggr).to receive(:warn)
@@ -43,7 +45,7 @@ describe LogStash::Inputs::Exec do
   end
 
   context "when a command runs normally" do
-    let(:input) { LogStash::Plugin.lookup("input", "exec").new("command" => "/bin/sh -c 'sleep 1; /bin/echo -n two; exit 3'", "interval" => 0) }
+    let(:input) { described_class.new("command" => "/bin/sh -c 'sleep 1; /bin/echo -n two; exit 3'", "interval" => 0) }
     let(:queue) { [] }
 
     before do
@@ -68,7 +70,7 @@ describe LogStash::Inputs::Exec do
   end
 
   context "when scheduling" do
-    let(:input) { LogStash::Plugin.lookup("input", "exec").new("command" => "ls", "schedule" => "* * * * * UTC") }
+    let(:input) { described_class.new("command" => "ls", "schedule" => "* * * * * UTC") }
     let(:queue) { [] }
 
     before do
