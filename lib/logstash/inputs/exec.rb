@@ -36,7 +36,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     @io       = nil
     
     if (@interval.nil? && @schedule.nil?) || (@interval && @schedule)
-      raise LogStash::ConfigurationError, "jdbc input: either 'interval' or 'schedule' option must be defined."
+      raise LogStash::ConfigurationError, "exec input: either 'interval' or 'schedule' option must be defined."
     end
   end # def register
 

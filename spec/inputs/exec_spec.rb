@@ -14,7 +14,7 @@ describe LogStash::Inputs::Exec do
     context "with an invalid config" do
       let(:input) { described_class.new("command" => "ls") }
       it "should raise error" do
-        expect {input.register}.to raise_error
+        expect {input.register}.to raise_error(LogStash::ConfigurationError)
       end
     end
   end
