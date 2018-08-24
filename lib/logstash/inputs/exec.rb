@@ -57,6 +57,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end # def run
 
   def stop
+    close_io()
     @scheduler.shutdown(:wait) if @scheduler
   end
 
@@ -94,8 +95,21 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   private
 
   def run_command
-    output, exit_status = Open3.capture2e(@command)
-    [output, exit_status.exitstatus]
+    @io = IO.popen(@command)
+    _, @io, exit_status = Open3.popen2(@command)
+    output = @io.read
+    @io.close # required in order to read $?
+    exit_status = exit_status.value.exitstatus
+    [output, exit_status]
+  ensure
+    close_io()
+  end
+
+  # Close @io
+  def close_io
+    return if @io.nil? || @io.closed?
+    @io.close
+    @io = nil
   end
 
   # Wait until the end of the interval
