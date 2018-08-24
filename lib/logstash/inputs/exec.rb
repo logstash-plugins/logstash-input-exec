@@ -95,7 +95,6 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   private
 
   def run_command
-    @io = IO.popen(@command)
     _, @io, exit_status = Open3.popen2(@command)
     output = @io.read
     @io.close # required in order to read $?
