@@ -25,7 +25,7 @@ describe LogStash::Inputs::Exec do
     let(:loggr) { double('loggr') }
 
     before :each do
-      expect(described_class).to receive(:logger).and_return(loggr).exactly(7).times
+      expect(described_class).to receive(:logger).and_return(loggr).exactly(8).times
       allow(loggr).to receive(:info)
       allow(loggr).to receive(:info?)
       allow(loggr).to receive(:warn)
@@ -67,6 +67,37 @@ describe LogStash::Inputs::Exec do
       expect(queue.pop.get('[@metadata][exit_status]')).to eq 3
     end
 
+  end
+
+  context "when inheriting environment" do
+    let(:input) { described_class.new("command" => "env | grep '^FOO='", "interval" => 0) }
+    let(:queue) { [] }
+
+    let(:input_env) { described_class.new("command" => "env | grep '^FOO='", "inherit_environment" => true, "interval" => 0) }
+    let(:queue_env) { [] }
+
+    before do
+      ENV["FOO"] = "BAR"
+
+      input.register
+      input.execute(queue)
+
+      input_env.register
+      input_env.execute(queue_env)
+    end
+
+    after do
+      input.stop
+      input_env.stop
+    end
+
+    it "didn't inherit the environment" do
+      expect(queue.pop.get('message')).to eq "\n"
+    end
+
+    it "inherited the environment" do
+      expect(queue_env.pop.get('message')).to eq "FOO=BAR\n"
+    end
   end
 
   context "when scheduling" do

@@ -21,6 +21,9 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   # Command to run. For example : `uptime`
   config :command, :validate => :string, :required => true
 
+  # Whether logstash's environment variables should be passed to the command
+  config :inherit_environment, :validate => :boolean, :default => false
+
   # Interval to run the command. Value is in seconds.
   # Either `interval` or `schedule` option must be defined.
   config :interval, :validate => :number
@@ -34,7 +37,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     @logger.info("Registering Exec Input", :type => @type, :command => @command, :interval => @interval, :schedule => @schedule)
     @hostname = Socket.gethostname
     @io       = nil
-    
+
     if (@interval.nil? && @schedule.nil?) || (@interval && @schedule)
       raise LogStash::ConfigurationError, "exec input: either 'interval' or 'schedule' option must be defined."
     end
@@ -94,7 +97,11 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   private
 
   def run_command
-    @io = IO.popen(@command)
+    if @inherit_environment
+      @io = IO.popen(ENV, @command)
+    else
+      @io = IO.popen(@command)
+    end
     output = @io.read
     @io.close # required in order to read $?
     exit_status = $?.exitstatus # should be threadsafe as per rb_thread_save_context
