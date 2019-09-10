@@ -1,3 +1,6 @@
+## 3.3.3
+  - Docs: improved doc on memory usage [#27](https://github.com/logstash-plugins/logstash-input-exec/pull/27)
+
 ## 3.3.2
   - Fixed issue where certain log entries were incorrectly writing 'jdbc input' instead of 'exec input' [#21](https://github.com/logstash-plugins/logstash-input-exec/pull/21)
 
