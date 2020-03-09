@@ -2,6 +2,7 @@
 require "timecop"
 require "time"
 require_relative "../spec_helper"
+require "logstash/devutils/rspec/shared_examples"
 
 describe LogStash::Inputs::Exec do
 
