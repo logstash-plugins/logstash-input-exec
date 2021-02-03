@@ -4,6 +4,7 @@ require "logstash/namespace"
 require "socket" # for Socket.gethostname
 require "stud/interval"
 require "rufus/scheduler"
+require "open3"
 
 # Periodically run a shell command and capture the whole output as an event.
 #
@@ -56,7 +57,6 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end # def run
 
   def stop
-    close_io()
     @scheduler.shutdown(:wait) if @scheduler
   end
 
@@ -94,20 +94,8 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   private
 
   def run_command
-    @io = IO.popen(@command)
-    output = @io.read
-    @io.close # required in order to read $?
-    exit_status = $?.exitstatus # should be threadsafe as per rb_thread_save_context
-    [output, exit_status]
-  ensure
-    close_io()
-  end
-
-  # Close @io
-  def close_io
-    return if @io.nil? || @io.closed?
-    @io.close
-    @io = nil
+    output, exit_status = Open3.capture2e(@command)
+    [output, exit_status.exitstatus]
   end
 
   # Wait until the end of the interval
