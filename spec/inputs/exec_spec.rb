@@ -54,7 +54,7 @@ describe LogStash::Inputs::Exec, :ecs_compatibility_support do
         input.register
       end
 
-      it "enqueues some events" do
+      it "does not enqueue an event" do
         expect(input.logger).to receive(:error)
 
         input.execute(queue)

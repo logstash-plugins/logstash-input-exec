@@ -81,10 +81,10 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
       output, exit_status = run_command()
     rescue StandardError => e
       @logger.error("Error while running command",
-        :command => @command, :e => e, :backtrace => e.backtrace)
+        :command => @command, :exception => e, :backtrace => e.backtrace)
     rescue Exception => e
       @logger.error("Exception while running command",
-        :command => @command, :e => e, :backtrace => e.backtrace)
+        :command => @command, :exception => e, :backtrace => e.backtrace)
     end
     duration = Time.now - start
     @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration)
