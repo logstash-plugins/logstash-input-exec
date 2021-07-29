@@ -59,7 +59,7 @@ describe LogStash::Inputs::Exec, :ecs_compatibility_support do
 
         input.execute(queue)
 
-        expect(queue.size).to be_zero
+        expect(queue.map(&:to_hash)).to be_empty
       end
     end
 
