@@ -5,6 +5,8 @@ require "socket" # for Socket.gethostname
 require "stud/interval"
 require "rufus/scheduler"
 
+require 'logstash/plugin_mixins/ecs_compatibility_support'
+
 # Periodically run a shell command and capture the whole output as an event.
 #
 # Notes:
@@ -13,6 +15,8 @@ require "rufus/scheduler"
 # * The `message` field of this event will be the entire stdout of the command.
 #
 class LogStash::Inputs::Exec < LogStash::Inputs::Base
+
+  include LogStash::PluginMixins::ECSCompatibilitySupport(:disabled, :v1, :v8 => :v1)
 
   config_name "exec"
 
@@ -38,6 +42,12 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     if (@interval.nil? && @schedule.nil?) || (@interval && @schedule)
       raise LogStash::ConfigurationError, "exec input: either 'interval' or 'schedule' option must be defined."
     end
+
+    @host_name_field = ecs_select[disabled: 'host', v1: '[host][name]']
+    @process_command_line_field = ecs_select[disabled: 'command', v1: '[process][command_line]']
+    @process_exit_code_field = ecs_select[disabled: '[@metadata][exit_status]', v1: '[process][exit_code]']
+    @process_elapsed_time_field = ecs_select[disabled: nil, v1: '[@metadata][input][exec][process][elapsed_time]'] # in nanos
+    @legacy_duration_field = ecs_select[disabled: '[@metadata][duration]', v1: nil] # in seconds
   end # def register
 
   def run(queue)
@@ -81,10 +91,11 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     if output
       @codec.decode(output) do |event|
         decorate(event)
-        event.set("host", @hostname)
-        event.set("command", @command)
-        event.set("[@metadata][duration]", duration)
-        event.set("[@metadata][exit_status]", exit_status)
+        event.set(@host_name_field, @hostname)
+        event.set(@process_command_line_field, @command)
+        event.set(@process_exit_code_field, exit_status)
+        event.set(@process_elapsed_time_field, to_nanos(duration)) if @process_elapsed_time_field
+        event.set(@legacy_duration_field, duration) if @legacy_duration_field
         queue << event
       end
     end
@@ -97,7 +108,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     @io = IO.popen(@command)
     output = @io.read
     @io.close # required in order to read $?
-    exit_status = $?.exitstatus # should be threadsafe as per rb_thread_save_context
+    exit_status = $?.exitstatus
     [output, exit_status]
   ensure
     close_io()
@@ -124,5 +135,9 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     end
   end
 
+  # convert seconds (float) to nanoseconds
+  def to_nanos(time_diff)
+    (time_diff * 1_000_000).to_i
+  end
 
 end # class LogStash::Inputs::Exec

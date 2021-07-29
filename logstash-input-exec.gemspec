@@ -21,6 +21,8 @@ Gem::Specification.new do |s|
 
   # Gem dependencies
   s.add_runtime_dependency "logstash-core-plugin-api", ">= 1.60", "<= 2.99"
+  s.add_runtime_dependency 'logstash-mixin-ecs_compatibility_support', '~> 1.3'
+
   s.add_runtime_dependency 'stud', '~> 0.0.22'
   s.add_runtime_dependency 'logstash-codec-plain'
   s.add_runtime_dependency 'rufus-scheduler'
