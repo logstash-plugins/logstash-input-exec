@@ -41,17 +41,36 @@ Example:
 ----------------------------------
 input {
   exec {
-    command => "ls"
+    command => "echo 'hi!'"
     interval => 30
   }
 }
 ----------------------------------
 
-This will execute `ls` command every 30 seconds.
+This will execute `echo` command every 30 seconds.
+
+[id="plugins-{type}s-{plugin}-ecs"]
+==== Compatibility with the Elastic Common Schema (ECS)
+
+This plugin adds metadata about the event's source, and can be configured to do so
+in an {ecs-ref}[ECS-compatible] way with <<plugins-{type}s-{plugin}-ecs_compatibility>>.
+This metadata is added after the event has been decoded by the appropriate codec,
+and will not overwrite existing values.
+
+|========
+| ECS Disabled | ECS v1 | Description
+
+| `host`  | `[host][name]` | The name of the {ls} host that processed the event
+| `command` | `[process][command_line]` | The command run by the plugin
+| `[@metadata][exit_status]` | `[process][exit_code]` | The exit code of the process
+
+| `[@metadata][input][exec][process][elapsed_time]` | -- | The elapsed time the command took to run in nanoseconds
+| `[@metadata][duration]` | -- | Command duration in seconds as a floating point number (deprecated)
+|========
 
 
 [id="plugins-{type}s-{plugin}-options"]
-==== Exec Input Configuration Options
+==== Exec Input configuration options
 
 This plugin supports the following configuration options plus the <<plugins-{type}s-{plugin}-common-options>> described later.
 
@@ -76,6 +95,59 @@ input plugins.
   * There is no default value for this setting.
 
 Command to run. For example, `uptime`
+
+[id="plugins-{type}s-{plugin}-ecs_compatibility"]
+===== `ecs_compatibility`
+
+  * Value type is <<string,string>>
+  * Supported values are:
+    ** `disabled`: uses backwards compatible field names e.g. `[host]`
+    ** `v1`, `v8`: uses fields that are compatible with ECS e.g. `[host][name]`
+
+Controls this plugin's compatibility with the {ecs-ref}[Elastic Common Schema (ECS)].
+See <<plugins-{type}s-{plugin}-ecs>> for detailed information.
+
+Example output:
+
+**Sample output: ECS enabled**
+[source,ruby]
+-----
+{
+    "message" => "hi!\n",
+    "process" => {
+        "command_line" => "echo 'hi!'",
+        "exit_code" => 0
+    },
+    "host" => {
+         "name" => "logstash-host1"
+    },
+
+    "@metadata" => {
+        "input" => {
+            "exec" => {
+                "process" => {
+                    "elapsed_time"=>3042
+                }
+            }
+        }
+    }
+}
+-----
+
+**Sample output: ECS disabled**
+[source,ruby]
+-----
+{
+    "message" => "hi!\n",
+    "command" => "echo 'hi!'",
+    "host" => "precision",
+
+    "@metadata" => {
+        "exit_status" => 0,
+        "duration" => 0.004388
+    }
+}
+-----
 
 [id="plugins-{type}s-{plugin}-interval"]
 ===== `interval` 
