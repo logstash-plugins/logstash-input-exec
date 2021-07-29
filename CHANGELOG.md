@@ -1,5 +1,7 @@
 ## 3.4.0
   - Feat: adjust fields for ECS compatibility [#28](https://github.com/logstash-plugins/logstash-input-exec/pull/28)
+  - Plugin will no longer override fields if they exists in the decoded payload 
+    (e.g. no longer sets the `host` field if decoded from the command's output)
 
 ## 3.3.3
   - Docs: improved doc on memory usage [#27](https://github.com/logstash-plugins/logstash-input-exec/pull/27)

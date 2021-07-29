@@ -91,9 +91,9 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     if output
       @codec.decode(output) do |event|
         decorate(event)
-        event.set(@host_name_field, @hostname)
-        event.set(@process_command_line_field, @command)
-        event.set(@process_exit_code_field, exit_status)
+        event.set(@host_name_field, @hostname) unless event.include?(@host_name_field)
+        event.set(@process_command_line_field, @command) unless event.include?(@process_command_line_field)
+        event.set(@process_exit_code_field, exit_status) unless event.include?(@process_exit_code_field)
         event.set(@process_elapsed_time_field, to_nanos(duration)) if @process_elapsed_time_field
         event.set(@legacy_duration_field, duration) if @legacy_duration_field
         queue << event
