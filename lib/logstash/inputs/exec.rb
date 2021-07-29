@@ -35,7 +35,6 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   config :schedule, :validate => :string
 
   def register
-    @logger.info("Registering Exec Input", :type => @type, :command => @command, :interval => @interval, :schedule => @schedule)
     @hostname = Socket.gethostname
     @io       = nil
     
