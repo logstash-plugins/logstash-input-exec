@@ -47,7 +47,7 @@ describe LogStash::Inputs::Exec, :ecs_compatibility_support do
     end
 
     context "when command fails" do
-      let(:input) { described_class.new("command" => "non_existent", "interval" => 0) }
+      let(:input) { described_class.new("command" => "invalid_command 1 2 3", "interval" => 0) }
       let(:queue) { [] }
 
       before :each do
