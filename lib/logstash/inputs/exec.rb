@@ -35,7 +35,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   config :schedule, :validate => :string
 
   def register
-    @hostname = Socket.gethostname
+    @hostname = Socket.gethostname.freeze
     @io       = nil
     
     if (@interval.nil? && @schedule.nil?) || (@interval && @schedule)
