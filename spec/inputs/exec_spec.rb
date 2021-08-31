@@ -61,7 +61,7 @@ describe LogStash::Inputs::Exec, :ecs_compatibility_support do
 
         expect(queue.map(&:to_hash)).to be_empty
       end
-    end unless ENV['CI'] # in Docker/CI the behavior differs - missing command files are not raised
+    end if ENV['CI'] != 'true' # in Docker the behavior differs - missing command files are not raised
 
     context "when a command runs normally" do
       let(:command) { "/bin/sh -c 'sleep 1; /bin/echo -n two; exit 3'" }
