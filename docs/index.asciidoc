@@ -119,7 +119,7 @@ Example output:
         "exit_code" => 0
     },
     "host" => {
-         "name" => "logstash-host1"
+        "name" => "deus-ex-machina"
     },
 
     "@metadata" => {
@@ -140,7 +140,7 @@ Example output:
 {
     "message" => "hi!\n",
     "command" => "echo 'hi!'",
-    "host" => "precision",
+    "host" => "deus-ex-machina",
 
     "@metadata" => {
         "exit_status" => 0,
