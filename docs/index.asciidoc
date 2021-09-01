@@ -102,8 +102,8 @@ Command to run. For example, `uptime`
 
   * Value type is <<string,string>>
   * Supported values are:
-    ** `disabled`: uses backwards compatible field names e.g. `[host]`
-    ** `v1`, `v8`: uses fields that are compatible with ECS e.g. `[host][name]`
+    ** `disabled`: uses backwards compatible field names, such as `[host]`
+    ** `v1`, `v8`: uses fields that are compatible with ECS, such as `[host][name]`
 
 Controls this plugin's compatibility with the {ecs-ref}[Elastic Common Schema (ECS)].
 See <<plugins-{type}s-{plugin}-ecs>> for detailed information.
