@@ -108,7 +108,6 @@ Command to run. For example, `uptime`
 Controls this plugin's compatibility with the {ecs-ref}[Elastic Common Schema (ECS)].
 See <<plugins-{type}s-{plugin}-ecs>> for detailed information.
 
-Example output:
 
 **Sample output: ECS enabled**
 [source,ruby]
