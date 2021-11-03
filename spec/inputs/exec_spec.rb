@@ -79,12 +79,14 @@ describe LogStash::Inputs::Exec, :ecs_compatibility_support do
 
       it "has duration (in seconds)" do
         duration = queue.pop.get('[@metadata][duration]')
+        expect(duration).to be_a Float
         expect(duration).to be > 1
         expect(duration).to be < 3
       end if ecs_select.active_mode == :disabled
 
       it "reports process elapsed time (in nanos)" do
         elapsed_time = queue.pop.get('[@metadata][input][exec][process][elapsed_time]')
+        expect(elapsed_time).to be_a Integer
         expect(elapsed_time).to be > 1 * 1_000_000
         expect(elapsed_time).to be < 3 * 1_000_000
       end if ecs_select.active_mode != :disabled

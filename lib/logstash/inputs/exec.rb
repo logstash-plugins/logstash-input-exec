@@ -85,8 +85,8 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
       @logger.error("Exception while running command",
         :command => @command, :exception => e, :backtrace => e.backtrace)
     end
-    duration = Time.now - start
-    @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration)
+    duration = Time.now.to_r - start.to_r
+    @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration.to_f)
     if output
       @codec.decode(output) do |event|
         decorate(event)
@@ -94,7 +94,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
         event.set(@process_command_line_field, @command) unless event.include?(@process_command_line_field)
         event.set(@process_exit_code_field, exit_status) unless event.include?(@process_exit_code_field)
         event.set(@process_elapsed_time_field, to_nanos(duration)) if @process_elapsed_time_field
-        event.set(@legacy_duration_field, duration) if @legacy_duration_field
+        event.set(@legacy_duration_field, duration.to_f) if @legacy_duration_field
         queue << event
       end
     end
