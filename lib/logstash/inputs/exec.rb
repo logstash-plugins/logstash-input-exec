@@ -70,8 +70,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end
 
   # Execute a given command
-  # @param [String] A command string
-  # @param [Array or Queue] A queue to append events to
+  # @param queue the LS queue to append events to
   def execute(queue)
     start = Time.now
     output = exit_status = nil
@@ -121,7 +120,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end
 
   # Wait until the end of the interval
-  # @param [Integer] the duration of the last command executed
+  # @param duration [Integer] the duration of the last command executed
   def wait_until_end_of_interval(duration)
     # Sleep for the remainder of the interval, or 0 if the duration ran
     # longer than the interval.
@@ -134,7 +133,8 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     end
   end
 
-  # convert seconds (float) to nanoseconds
+  # convert seconds to nanoseconds
+  # @param time_diff [Numeric] the (rational value) difference to convert
   def to_nanos(time_diff)
     (time_diff * 1_000_000).to_i
   end
