@@ -57,14 +57,14 @@ This metadata is added after the event has been decoded by the appropriate codec
 and will not overwrite existing values.
 
 |========
-| ECS Disabled | ECS v1 , v8| Description
+| ECS Disabled               | ECS v1 , v8               | Description
 
-| `host`  | `[host][name]` | The name of the {ls} host that processed the event
-| `command` | `[process][command_line]` | The command run by the plugin
-| `[@metadata][exit_status]` | `[process][exit_code]` | The exit code of the process
-
-| -- | `[@metadata][input][exec][process][elapsed_time]` | The elapsed time the command took to run in nanoseconds
-| `[@metadata][duration]` | -- | Command duration in seconds as a floating point number (deprecated)
+| `host`                     | `[host][name]`            | The name of the {ls} host that processed the event
+| `command`                  | `[process][command_line]` | The command run by the plugin
+| `[@metadata][exit_status]` | `[process][exit_code]`    | The exit code of the process
+| --                         | `[@metadata][input][exec][process][elapsed_time]`
+                                                         | The elapsed time the command took to run in nanoseconds
+| `[@metadata][duration]`    | --                        | Command duration in seconds as a floating point number (deprecated)
 |========
 
 
