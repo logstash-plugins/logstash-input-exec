@@ -42,11 +42,13 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
       raise LogStash::ConfigurationError, "exec input: either 'interval' or 'schedule' option must be defined."
     end
 
-    @host_name_field = ecs_select[disabled: 'host', v1: '[host][name]']
-    @process_command_line_field = ecs_select[disabled: 'command', v1: '[process][command_line]']
-    @process_exit_code_field = ecs_select[disabled: '[@metadata][exit_status]', v1: '[process][exit_code]']
-    @process_elapsed_time_field = ecs_select[disabled: nil, v1: '[@metadata][input][exec][process][elapsed_time]'] # in nanos
-    @legacy_duration_field = ecs_select[disabled: '[@metadata][duration]', v1: nil] # in seconds
+    @host_name_field =            ecs_select[disabled: 'host',                     v1: '[host][name]']
+    @process_command_line_field = ecs_select[disabled: 'command',                  v1: '[process][command_line]']
+    @process_exit_code_field =    ecs_select[disabled: '[@metadata][exit_status]', v1: '[process][exit_code]']
+    
+    # migrate elapsed time tracking to whole nanos, from legacy floating-point fractional seconds
+    @process_elapsed_time_field = ecs_select[disabled: nil,                        v1: '[@metadata][input][exec][process][elapsed_time]'] # in nanos
+    @legacy_duration_field =      ecs_select[disabled: '[@metadata][duration]',    v1: nil] # in seconds
   end # def register
 
   def run(queue)
