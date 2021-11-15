@@ -46,23 +46,6 @@ describe LogStash::Inputs::Exec, :ecs_compatibility_support do
       end
     end
 
-    context "when command fails" do
-      let(:input) { described_class.new("command" => "invalid_command 1 2 3", "interval" => 0) }
-      let(:queue) { [] }
-
-      before :each do
-        input.register
-      end
-
-      it "does not enqueue an event (in a non-Docker env)" do
-        expect(input.logger).to receive(:error).and_call_original
-
-        input.execute(queue)
-
-        expect(queue.map(&:to_hash)).to be_empty
-      end
-    end if ENV['CI'] != 'true' # in Docker the behavior differs - missing command files are not raised
-
     context "when a command runs normally" do
       let(:command) { "/bin/sh -c 'sleep 1; /bin/echo -n two; exit 3'" }
       let(:input) { described_class.new("command" => command, "interval" => 0) }
