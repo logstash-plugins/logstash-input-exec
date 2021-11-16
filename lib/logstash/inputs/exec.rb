@@ -5,6 +5,8 @@ require "socket" # for Socket.gethostname
 require "stud/interval"
 require "rufus/scheduler"
 
+require 'logstash/plugin_mixins/ecs_compatibility_support'
+
 # Periodically run a shell command and capture the whole output as an event.
 #
 # Notes:
@@ -13,6 +15,8 @@ require "rufus/scheduler"
 # * The `message` field of this event will be the entire stdout of the command.
 #
 class LogStash::Inputs::Exec < LogStash::Inputs::Base
+
+  include LogStash::PluginMixins::ECSCompatibilitySupport(:disabled, :v1, :v8 => :v1)
 
   config_name "exec"
 
@@ -31,13 +35,20 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   config :schedule, :validate => :string
 
   def register
-    @logger.info("Registering Exec Input", :type => @type, :command => @command, :interval => @interval, :schedule => @schedule)
-    @hostname = Socket.gethostname
+    @hostname = Socket.gethostname.freeze
     @io       = nil
     
     if (@interval.nil? && @schedule.nil?) || (@interval && @schedule)
       raise LogStash::ConfigurationError, "exec input: either 'interval' or 'schedule' option must be defined."
     end
+
+    @host_name_field =            ecs_select[disabled: 'host',                     v1: '[host][name]']
+    @process_command_line_field = ecs_select[disabled: 'command',                  v1: '[process][command_line]']
+    @process_exit_code_field =    ecs_select[disabled: '[@metadata][exit_status]', v1: '[process][exit_code]']
+    
+    # migrate elapsed time tracking to whole nanos, from legacy floating-point fractional seconds
+    @process_elapsed_time_field = ecs_select[disabled: nil,                        v1: '[@metadata][input][exec][process][elapsed_time]'] # in nanos
+    @legacy_duration_field =      ecs_select[disabled: '[@metadata][duration]',    v1: nil] # in seconds
   end # def register
 
   def run(queue)
@@ -61,8 +72,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end
 
   # Execute a given command
-  # @param [String] A command string
-  # @param [Array or Queue] A queue to append events to
+  # @param queue the LS queue to append events to
   def execute(queue)
     start = Time.now
     output = exit_status = nil
@@ -71,20 +81,21 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
       output, exit_status = run_command()
     rescue StandardError => e
       @logger.error("Error while running command",
-        :command => @command, :e => e, :backtrace => e.backtrace)
+        :command => @command, :exception => e, :backtrace => e.backtrace)
     rescue Exception => e
       @logger.error("Exception while running command",
-        :command => @command, :e => e, :backtrace => e.backtrace)
+        :command => @command, :exception => e, :backtrace => e.backtrace)
     end
-    duration = Time.now - start
-    @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration)
+    duration = Time.now.to_r - start.to_r
+    @logger.debug? && @logger.debug("Command completed", :command => @command, :duration => duration.to_f)
     if output
       @codec.decode(output) do |event|
         decorate(event)
-        event.set("host", @hostname)
-        event.set("command", @command)
-        event.set("[@metadata][duration]", duration)
-        event.set("[@metadata][exit_status]", exit_status)
+        event.set(@host_name_field, @hostname) unless event.include?(@host_name_field)
+        event.set(@process_command_line_field, @command) unless event.include?(@process_command_line_field)
+        event.set(@process_exit_code_field, exit_status) unless event.include?(@process_exit_code_field)
+        event.set(@process_elapsed_time_field, to_nanos(duration)) if @process_elapsed_time_field
+        event.set(@legacy_duration_field, duration.to_f) if @legacy_duration_field
         queue << event
       end
     end
@@ -97,7 +108,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     @io = IO.popen(@command)
     output = @io.read
     @io.close # required in order to read $?
-    exit_status = $?.exitstatus # should be threadsafe as per rb_thread_save_context
+    exit_status = $?.exitstatus
     [output, exit_status]
   ensure
     close_io()
@@ -111,7 +122,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end
 
   # Wait until the end of the interval
-  # @param [Integer] the duration of the last command executed
+  # @param duration [Integer] the duration of the last command executed
   def wait_until_end_of_interval(duration)
     # Sleep for the remainder of the interval, or 0 if the duration ran
     # longer than the interval.
@@ -124,5 +135,10 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
     end
   end
 
+  # convert seconds to nanoseconds
+  # @param time_diff [Numeric] the (rational value) difference to convert
+  def to_nanos(time_diff)
+    (time_diff * 1_000_000).to_i
+  end
 
 end # class LogStash::Inputs::Exec
