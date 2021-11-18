@@ -1,6 +1,7 @@
 # encoding: utf-8
 require "logstash/inputs/base"
 require "logstash/namespace"
+require "open3"
 require "socket" # for Socket.gethostname
 require "stud/interval"
 require "rufus/scheduler"
@@ -105,10 +106,10 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   private
 
   def run_command
-    @io = IO.popen(@command)
+    _, @io, status = Open3.popen2(@command)
     output = @io.read
-    @io.close # required in order to read $?
-    exit_status = $?.exitstatus
+    #@io.close # required in order to read $?
+    exit_status = status.value.exitstatus
     [output, exit_status]
   ensure
     close_io()
