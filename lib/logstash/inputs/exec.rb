@@ -37,8 +37,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
 
   def register
     @hostname = Socket.gethostname.freeze
-    @io       = nil
-    
+
     if (@interval.nil? && @schedule.nil?) || (@interval && @schedule)
       raise LogStash::ConfigurationError, "exec input: either 'interval' or 'schedule' option must be defined."
     end
@@ -68,7 +67,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end # def run
 
   def stop
-    close_io()
+    close_out_and_in
     @scheduler.shutdown(:wait) if @scheduler
   end
 
@@ -106,20 +105,24 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   private
 
   def run_command
-    _, @io, status = Open3.popen2(@command)
-    output = @io.read
-    #@io.close # required in order to read $?
-    exit_status = status.value.exitstatus
+    @p_in, @p_out, waiter = Open3.popen2(@command)
+    output = @p_out.read
+    exit_status = waiter.value.exitstatus
     [output, exit_status]
   ensure
-    close_io()
+    close_out_and_in
   end
 
-  # Close @io
-  def close_io
-    return if @io.nil? || @io.closed?
-    @io.close
-    @io = nil
+  def close_out_and_in
+    do_close(@p_out)
+    @p_out = nil
+    do_close(@p_in)
+    @p_in = nil
+  end
+
+  def do_close(io)
+    return if io.nil? || io.closed?
+    io.close
   end
 
   # Wait until the end of the interval
