@@ -114,17 +114,17 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end
 
   def close_out_and_in
-    do_close(@p_out)
+    close_io(@p_out)
     @p_out = nil
-    do_close(@p_in)
+    close_io(@p_in)
     @p_in = nil
   end
 
-  def do_close(io)
+  def close_io(io)
     return if io.nil? || io.closed?
     io.close
   rescue => e
-    @logger.debug("exception raised while closing io. ignoring..", :io => io, :exception => e.class, :message => e.message)
+    @logger.debug("ignoring exception raised while closing io", :io => io, :exception => e.class, :message => e.message)
   end
 
   # Wait until the end of the interval
