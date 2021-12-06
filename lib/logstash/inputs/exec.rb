@@ -123,6 +123,8 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   def do_close(io)
     return if io.nil? || io.closed?
     io.close
+  rescue => e
+    @logger.debug("exception raised while closing io. ignoring..", :io => io, :exception => e.class, :message => e.message)
   end
 
   # Wait until the end of the interval
