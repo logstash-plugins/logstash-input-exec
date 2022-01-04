@@ -1,3 +1,6 @@
+## 3.5.0
+  - Fix: behavior incompatiblity between (standalone) LS and LS in Docker [#30](https://github.com/logstash-plugins/logstash-input-exec/pull/30)
+
 ## 3.4.0
   - Feat: adjust fields for ECS compatibility [#28](https://github.com/logstash-plugins/logstash-input-exec/pull/28)
   - Plugin will no longer override fields if they exist in the decoded payload.

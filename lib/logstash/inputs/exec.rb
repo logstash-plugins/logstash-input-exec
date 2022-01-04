@@ -1,6 +1,7 @@
 # encoding: utf-8
 require "logstash/inputs/base"
 require "logstash/namespace"
+require "open3"
 require "socket" # for Socket.gethostname
 require "stud/interval"
 require "rufus/scheduler"
@@ -36,8 +37,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
 
   def register
     @hostname = Socket.gethostname.freeze
-    @io       = nil
-    
+
     if (@interval.nil? && @schedule.nil?) || (@interval && @schedule)
       raise LogStash::ConfigurationError, "exec input: either 'interval' or 'schedule' option must be defined."
     end
@@ -67,7 +67,7 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   end # def run
 
   def stop
-    close_io()
+    close_out_and_in
     @scheduler.shutdown(:wait) if @scheduler
   end
 
@@ -105,20 +105,26 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
   private
 
   def run_command
-    @io = IO.popen(@command)
-    output = @io.read
-    @io.close # required in order to read $?
-    exit_status = $?.exitstatus
+    @p_in, @p_out, waiter = Open3.popen2(@command)
+    output = @p_out.read
+    exit_status = waiter.value.exitstatus
     [output, exit_status]
   ensure
-    close_io()
+    close_out_and_in
   end
 
-  # Close @io
-  def close_io
-    return if @io.nil? || @io.closed?
-    @io.close
-    @io = nil
+  def close_out_and_in
+    close_io(@p_out)
+    @p_out = nil
+    close_io(@p_in)
+    @p_in = nil
+  end
+
+  def close_io(io)
+    return if io.nil? || io.closed?
+    io.close
+  rescue => e
+    @logger.debug("ignoring exception raised while closing io", :io => io, :exception => e.class, :message => e.message)
   end
 
   # Wait until the end of the interval
