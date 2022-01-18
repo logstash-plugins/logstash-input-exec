@@ -90,7 +90,7 @@ describe LogStash::Inputs::Exec, :ecs_compatibility_support do
         expect(elapsed_time).to be > 1 * 1_000_000
         expect(elapsed_time).to be < 3 * 1_000_000
       end if ecs_select.active_mode != :disabled
-      
+
       it "has output as expected" do
         expect(queue.pop.get('message')).to eq "two"
       end
@@ -116,7 +116,7 @@ describe LogStash::Inputs::Exec, :ecs_compatibility_support do
   end
 
   context "when scheduling" do
-    let(:input) { described_class.new("command" => "ls --help", "schedule" => "* * * * * UTC") }
+    let(:input) { described_class.new("command" => "ls", "schedule" => "4-5 * * * * UTC") }
     let(:queue) { [] }
 
     before do
@@ -129,7 +129,7 @@ describe LogStash::Inputs::Exec, :ecs_compatibility_support do
       runner = Thread.new do
         input.run(queue)
       end
-      sleep 3
+      sleep 6
       input.stop
       runner.kill
       runner.join
