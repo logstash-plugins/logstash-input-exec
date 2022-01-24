@@ -1,3 +1,6 @@
+## unreleased
+  - Fix: Test failures due to insufficient time given for scheduler to start [#32](https://github.com/logstash-plugins/logstash-input-exec/pull/32) 
+
 ## 3.5.0
   - Fix: behavior incompatiblity between (standalone) LS and LS in Docker [#30](https://github.com/logstash-plugins/logstash-input-exec/pull/30)
 
