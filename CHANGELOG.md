@@ -1,4 +1,5 @@
-## unreleased
+## 3.6.0
+  - Refactor: start using scheduler mixin [#33](https://github.com/logstash-plugins/logstash-input-exec/pull/33)
   - Fix: Test failures due to insufficient time given for scheduler to start [#32](https://github.com/logstash-plugins/logstash-input-exec/pull/32) 
 
 ## 3.5.0

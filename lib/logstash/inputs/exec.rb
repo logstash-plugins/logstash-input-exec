@@ -4,9 +4,9 @@ require "logstash/namespace"
 require "open3"
 require "socket" # for Socket.gethostname
 require "stud/interval"
-require "rufus/scheduler"
 
 require 'logstash/plugin_mixins/ecs_compatibility_support'
+require "logstash/plugin_mixins/scheduler"
 
 # Periodically run a shell command and capture the whole output as an event.
 #
@@ -18,6 +18,7 @@ require 'logstash/plugin_mixins/ecs_compatibility_support'
 class LogStash::Inputs::Exec < LogStash::Inputs::Base
 
   include LogStash::PluginMixins::ECSCompatibilitySupport(:disabled, :v1, :v8 => :v1)
+  include LogStash::PluginMixins::Scheduler
 
   config_name "exec"
 
@@ -53,11 +54,8 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
 
   def run(queue)
     if @schedule
-      @scheduler = Rufus::Scheduler.new(:max_work_threads => 1)
-      @scheduler.cron @schedule do
-        execute(queue)
-      end
-      @scheduler.join
+      scheduler.cron(@schedule) { execute(queue) }
+      scheduler.join
     else
       while !stop?
         duration = execute(queue)
@@ -68,7 +66,6 @@ class LogStash::Inputs::Exec < LogStash::Inputs::Base
 
   def stop
     close_out_and_in
-    @scheduler.shutdown(:wait) if @scheduler
   end
 
   # Execute a given command
