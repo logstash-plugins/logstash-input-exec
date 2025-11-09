@@ -17,7 +17,11 @@ Gem::Specification.new do |s|
   s.test_files = s.files.grep(%r{^(test|spec|features)/})
 
   # Special flag to let us know this is actually a logstash plugin
-  s.metadata = { "logstash_plugin" => "true", "logstash_group" => "input" }
+  s.metadata = { 
+    "logstash_plugin" => "true", 
+    "logstash_group" => "input",
+    "changelog_uri" => "https://github.com/logstash-plugins/logstash-input-exec/blob/main/CHANGELOG.md"
+  }
 
   # Gem dependencies
   s.add_runtime_dependency "logstash-core-plugin-api", ">= 1.60", "<= 2.99"
